@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Assistant — LLM AI Chatbot</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
+    <!-- Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Left Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>Smart Assistant</h2>
+                        <span class="badge-gemini"><i class="fa-solid fa-sparkles"></i> Gemini AI</span>
+                    </div>
+                </div>
+                <button class="icon-btn close-sidebar-btn" id="closeSidebarBtn" title="Close Sidebar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- New Chat Action -->
+            <div class="sidebar-action">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Chat</span>
+                </button>
+            </div>
+
+            <!-- Conversation History List -->
+            <div class="conversations-section">
+                <div class="section-title">
+                    <span>Recent Chats</span>
+                    <span class="chat-count" id="chatCount">0</span>
+                </div>
+                <div class="conversations-list" id="conversationsList">
+                    <!-- Dynamic chat items rendered via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Sidebar Footer / Controls -->
+            <div class="sidebar-footer">
+                <div class="settings-row">
+                    <button class="action-pill-btn" id="themeToggleBtn" title="Toggle Theme">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
+                        <span id="themeLabel">Dark Mode</span>
+                    </button>
+                    <button class="action-pill-btn danger" id="clearChatBtn" title="Clear Current Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Clear Chat</span>
+                    </button>
+                </div>
+                <div class="system-status">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">Model: <strong id="activeModelTag">{{ model_name }}</strong></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-container">
+            <!-- Chat Top Navigation Bar -->
+            <header class="chat-header">
+                <div class="header-left">
+                    <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" title="Open Sidebar">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="chat-meta">
+                        <h1 class="chat-title" id="chatTitle">New Conversation</h1>
+                        <div class="chat-subinfo">
+                            <span class="context-pill"><i class="fa-solid fa-clock-rotate-left"></i> Context: Last {{ max_history }} msgs</span>
+                            <span class="memory-pill" id="messageCounterPill"><i class="fa-solid fa-layer-group"></i> 0 messages</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="header-action-btn" id="headerNewChatBtn" title="Start New Conversation">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span class="btn-text">New Chat</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Messages Scrollable Body -->
+            <div class="chat-body" id="chatBody">
+                <!-- Welcome View (Visible on Empty Chat) -->
+                <div class="welcome-container" id="welcomeContainer">
+                    <div class="welcome-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h2>How can I help you today?</h2>
+                    <p>I am Smart Assistant, powered by Google Gemini with multi-turn memory and context window management.</p>
+
+                    <div class="prompt-suggestions">
+                        <button class="suggestion-card" data-prompt="My name is Sai and I am studying Artificial Intelligence.">
+                            <div class="card-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                            <div class="card-text">
+                                <strong>Introduce myself</strong>
+                                <span>Share background for memory test</span>
+                            </div>
+                        </button>
+
+                        <button class="suggestion-card" data-prompt="Explain how context window management works in LLMs.">
+                            <div class="card-icon"><i class="fa-solid fa-network-wired"></i></div>
+                            <div class="card-text">
+                                <strong>Context Window</strong>
+                                <span>Learn how LLMs retain chat memory</span>
+                            </div>
+                        </button>
+
+                        <button class="suggestion-card" data-prompt="Write a Python script for a simple Flask REST API.">
+                            <div class="card-icon"><i class="fa-brands fa-python"></i></div>
+                            <div class="card-text">
+                                <strong>Python Code</strong>
+                                <span>Generate structured Python code</span>
+                            </div>
+                        </button>
+
+                        <button class="suggestion-card" data-prompt="What are the best practices for prompt engineering?">
+                            <div class="card-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                            <div class="card-text">
+                                <strong>Prompt Engineering</strong>
+                                <span>Step-by-step best practices</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chat Message Stream -->
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be dynamically rendered here -->
+                </div>
+
+                <!-- Typing / Loading Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="avatar assistant-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="typing-bubble">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <span class="typing-text">Smart Assistant is thinking...</span>
+                </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <footer class="chat-input-area">
+                <form class="input-form" id="chatForm">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Message Smart Assistant... (Press Enter to send, Shift+Enter for new line)" 
+                            rows="1"
+                            maxlength="4000"
+                            autocomplete="off"
+                            required
+                        ></textarea>
+                        <button type="submit" class="send-btn" id="sendBtn" title="Send message">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="input-footer-note">
+                    <span>Powered by Google Gemini API &bull; Multi-Turn Memory &bull; Context Window Managed</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Application Script -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
